@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# STEAM Academy exercises: generated sample data / local scratch storage
+lab1_object_store/pictures/
+cloud-storage/
+lab2_measure_your_machine/bench_data.bin
+lab2_measure_your_machine/bench_flush.bin
+lab2_measure_your_machine/queue_depth_timings.csv
+lab2_measure_your_machine/small_file_tax/
+lab3_erasure_and_healing/queue_depth_knee.png
+take_home/scrub_report.txt
