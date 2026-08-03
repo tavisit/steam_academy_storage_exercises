@@ -1,5 +1,5 @@
 """
-3B demo (task 4) -- silent corruption. cloud_check only confirms a copy
+3B demo (task 4): silent corruption. cloud_check only confirms a copy
 *exists*; it says nothing about whether its bytes are still correct. A
 checksum is the only thing that notices.
 
@@ -41,7 +41,7 @@ def main():
             f.seek(0)
             f.write(bytes([byte[0] ^ 0xFF]))
         print(f"\nFlipped one byte directly on disk on server {server} "
-              f"(bypassing cloud_upload entirely -- simulates silent bit rot).")
+              f"(bypassing cloud_upload entirely, simulates silent bit rot).")
 
         print("cloud_check AFTER corruption: ", cloud_check(TEST_NAME),
               " <-- still OK. The file exists and is the right size.")

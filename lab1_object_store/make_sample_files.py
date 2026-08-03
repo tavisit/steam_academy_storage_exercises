@@ -1,5 +1,5 @@
 """
-make_sample_files.py -- generates 128 stand-in sample files (same role as
+make_sample_files.py: generates 128 stand-in sample files (same role as
 the original CSC 2025 pictures.tgz) so the labs don't depend on downloading
 external material. Run once before Task 1.1.
 """

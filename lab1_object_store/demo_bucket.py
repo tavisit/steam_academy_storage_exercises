@@ -1,5 +1,5 @@
 """
-Task 1.2 demo -- compare cloud_ls() (one lookup) against a brute-force scan
+Task 1.2 demo: compare cloud_ls() (one lookup) against a brute-force scan
 of every server (N_SERVERS lookups), and check they agree.
 
 Run after implementing cloud_ls():
@@ -34,7 +34,7 @@ def main():
     print(f"brute-force scan: {len(scan_result)} names, {N_SERVERS} lookups,           {t2 - t1:.6f}s")
 
     if bucket_result == scan_result:
-        print("\nMatch -- the bucket index is a faithful, single-lookup namespace.")
+        print("\nMatch: the bucket index is a faithful, single-lookup namespace.")
     else:
         only_in_bucket = set(bucket_result) - set(scan_result)
         only_in_scan = set(scan_result) - set(bucket_result)

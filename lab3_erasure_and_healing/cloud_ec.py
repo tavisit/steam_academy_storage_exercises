@@ -1,5 +1,5 @@
 """
-cloud_ec.py -- Lab 3A (erasure coding) + Lab 3B (corruption & self-healing).
+cloud_ec.py (Lab 3A, erasure coding; Lab 3B, corruption & self-healing).
 
 Builds directly on your Lab 1 cloud.py: cloud_check/cloud_heal operate on
 files uploaded with Lab 1's replicated cloud_upload (primary + same-disk
@@ -49,7 +49,7 @@ def _ec_servers(cloud_name):
 
 
 # --------------------------------------------------------------------------
-# 3A -- erasure coding
+# 3A: erasure coding
 # --------------------------------------------------------------------------
 
 def cloud_ec_upload(local_path, cloud_name):
@@ -74,14 +74,14 @@ def cloud_ec_download(cloud_name, local_path):
         original size.
       - If exactly 1 data chunk is missing: reconstruct it by XOR-ing the
         3 surviving data chunks with the parity chunk.
-      - If 2 or more data chunks are missing: this scheme cannot recover --
-        print why and return without writing `local_path`.
+      - If 2 or more data chunks are missing: this scheme cannot recover.
+        Print why and return without writing `local_path`.
     """
     raise NotImplementedError("cloud_ec_download: implement me")
 
 
 # --------------------------------------------------------------------------
-# 3B -- corruption & self-healing (operates on Lab 1's replicated files)
+# 3B: corruption & self-healing (operates on Lab 1's replicated files)
 # --------------------------------------------------------------------------
 
 def cloud_check(cloud_name):
@@ -97,7 +97,7 @@ def cloud_heal(cloud_name):
     """
     Task 3B.3: for a DEGRADED file, download it from whichever replica
     still has it, and re-upload it to whichever replica location(s) are
-    missing it -- restoring 3 total copies. Return False if the file is
+    missing it, restoring 3 total copies. Return False if the file is
     LOST (no surviving replica to heal from).
     """
     raise NotImplementedError("cloud_heal: implement me")
@@ -107,7 +107,7 @@ def checksum_store(cloud_name, local_path):
     """
     Task 3B.4: compute a SHA-1 checksum of `local_path` and store it
     alongside the replicas (e.g. upload it as `cloud_name + '.sha1'` to
-    the same servers cloud_check looks at, or just the primary -- your
+    the same servers cloud_check looks at, or just the primary, your
     choice, as long as checksum_verify can find it again).
     """
     raise NotImplementedError("checksum_store: implement me")
@@ -117,7 +117,7 @@ def checksum_verify(cloud_name, local_path):
     """
     Task 3B.4: recompute the checksum of `local_path` (a copy you just
     downloaded) and compare it against what checksum_store saved. Return
-    True/False. This is the check cloud_check does NOT do -- cloud_check
+    True/False. This is the check cloud_check does NOT do: cloud_check
     only confirms a copy *exists*, not that its bytes are still correct.
     """
     raise NotImplementedError("checksum_verify: implement me")

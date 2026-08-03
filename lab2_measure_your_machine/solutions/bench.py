@@ -1,5 +1,5 @@
 """
-bench.py -- Lab 2 solution.
+bench.py (Lab 2): solution.
 
     python3 bench.py 2.1
     python3 bench.py 2.2
@@ -23,12 +23,12 @@ import sys
 import time
 
 DATA_SIZE = 16 * 1024 * 1024 * 1024  # 16 GiB
-WORK_DIR = os.environ.get("STEAM_BENCH_DIR") or "."
+WORK_DIR = os.environ.get("STEAM_SCRATCH_DIR") or "."
 os.makedirs(WORK_DIR, exist_ok=True)
 DATA_FILE = os.path.join(WORK_DIR, "bench_data.bin")
 COMPARE_BYTES = 256 * 1024 * 1024
 
-# walk up from this file until a `common/` sibling turns up -- works
+# walk up from this file until a `common/` sibling turns up: works
 # whether this file stays at its committed depth (.../solutions/) or
 # gets copied up to replace the stub (.../), same as every other
 # solutions/*.py file
@@ -107,57 +107,7 @@ def task_2_1_sequential_vs_random():
     print(f"random was {t_rand / t_seq:.1f}x slower for the same total bytes.")
 
 
-def _page_aligned_buffer(size, alignment=4096):
-    # anonymous mmap regions are page-aligned on every platform that
-    # supports O_DIRECT, which is exactly the platform this needs to work on
-    return mmap.mmap(-1, size)
-
-
-def task_2_2_buffered_cached_direct():
-    block = 1024 * 1024
-
-    t0 = time.perf_counter()
-    with open(DATA_FILE, "rb", buffering=block) as f:
-        while f.read(block):
-            pass
-    t_buffered = time.perf_counter() - t0
-
-    t0 = time.perf_counter()
-    with open(DATA_FILE, "rb", buffering=block) as f:
-        while f.read(block):
-            pass
-    t_cached = time.perf_counter() - t0
-
-    mib = DATA_SIZE / (1024 * 1024)
-    print(f"buffered, first read : {t_buffered:7.3f}s  ({mib / t_buffered:8.1f} MiB/s)")
-    print(f"buffered, second read: {t_cached:7.3f}s  ({mib / t_cached:8.1f} MiB/s)  (page cache warm)")
-
-    if not hasattr(os, "O_DIRECT"):
-        print("O_DIRECT not available on this platform (Linux-only) -- skipping.")
-        return
-
-    try:
-        fd = os.open(DATA_FILE, os.O_RDONLY | os.O_DIRECT)
-    except OSError as e:
-        print(f"O_DIRECT not usable here ({e}) -- likely an unsupported filesystem.")
-        return
-
-    try:
-        buf = _page_aligned_buffer(block)
-        t0 = time.perf_counter()
-        total = 0
-        while True:
-            n = os.readv(fd, [buf])
-            if n <= 0:
-                break
-            total += n
-        t_direct = time.perf_counter() - t0
-        print(f"O_DIRECT read        : {t_direct:7.3f}s  ({total / (1024 * 1024) / t_direct:8.1f} MiB/s)  (page cache bypassed)")
-    finally:
-        os.close(fd)
-
-
-def task_2_3_flush():
+def task_2_2_flush():
     path = os.path.join(WORK_DIR, "bench_flush.bin")
     n_writes = 2000
     data = os.urandom(4096)
@@ -182,7 +132,7 @@ def task_2_3_flush():
     print(f"durability tax: {t_flush / t_no_flush:.1f}x slower")
 
 
-def task_2_4_queue_depth_sweep():
+def task_2_3_queue_depth_sweep():
     block_size = 4096
     ops_per_level = 500
     levels = (1, 4, 16, 64, 256)
@@ -220,7 +170,57 @@ def task_2_4_queue_depth_sweep():
         writer = csv.DictWriter(f, fieldnames=["queue_depth", "latency_s"])
         writer.writeheader()
         writer.writerows(rows)
-    print(f"\nRaw per-operation timings written to {csv_path} -- keep this for Lab 3C.")
+    print(f"\nRaw per-operation timings written to {csv_path}, keep this for Lab 3C.")
+
+
+def _page_aligned_buffer(size, alignment=4096):
+    # anonymous mmap regions are page-aligned on every platform that
+    # supports O_DIRECT, which is exactly the platform this needs to work on
+    return mmap.mmap(-1, size)
+
+
+def task_2_4_buffered_cached_direct():
+    block = 1024 * 1024
+
+    t0 = time.perf_counter()
+    with open(DATA_FILE, "rb", buffering=block) as f:
+        while f.read(block):
+            pass
+    t_buffered = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    with open(DATA_FILE, "rb", buffering=block) as f:
+        while f.read(block):
+            pass
+    t_cached = time.perf_counter() - t0
+
+    mib = DATA_SIZE / (1024 * 1024)
+    print(f"buffered, first read : {t_buffered:7.3f}s  ({mib / t_buffered:8.1f} MiB/s)")
+    print(f"buffered, second read: {t_cached:7.3f}s  ({mib / t_cached:8.1f} MiB/s)  (page cache warm)")
+
+    if not hasattr(os, "O_DIRECT"):
+        print("O_DIRECT not available on this platform (Linux-only), skipping.")
+        return
+
+    try:
+        fd = os.open(DATA_FILE, os.O_RDONLY | os.O_DIRECT)
+    except OSError as e:
+        print(f"O_DIRECT not usable here ({e}), likely an unsupported filesystem.")
+        return
+
+    try:
+        buf = _page_aligned_buffer(block)
+        t0 = time.perf_counter()
+        total = 0
+        while True:
+            n = os.readv(fd, [buf])
+            if n <= 0:
+                break
+            total += n
+        t_direct = time.perf_counter() - t0
+        print(f"O_DIRECT read        : {t_direct:7.3f}s  ({total / (1024 * 1024) / t_direct:8.1f} MiB/s)  (page cache bypassed)")
+    finally:
+        os.close(fd)
 
 
 def h4d(hexchar):
@@ -272,7 +272,7 @@ def _count_copies(names):
 def task_2_5_garbage_collection_after_resize():
     pictures = sorted(glob.glob(os.path.join(LAB1_DIR, "pictures", "*")))[:30]
     if len(pictures) < 30:
-        print("Not enough sample files -- run make_sample_files.py in lab1_object_store/ first.")
+        print("Not enough sample files, run make_sample_files.py in lab1_object_store/ first.")
         return
 
     names = [os.path.basename(p) for p in pictures]
@@ -284,14 +284,14 @@ def task_2_5_garbage_collection_after_resize():
     print(f"Physical copies of these files on disk: {before} (expected {len(names) * 3} = files x 3 replicas)\n")
 
     print("cloud_ls() after the 'resize' to 4 servers:")
-    print(f"  {len(cloud_ls())} names still listed -- the bucket index doesn't know")
+    print(f"  {len(cloud_ls())} names still listed, the bucket index doesn't know")
     print("  or care how many servers the hash table has.\n")
 
     reachable = sum(1 for name in names if name in list_names(h4d(sha1string(name)[0])))
     print(f"Reachable at their NEW-scheme (4-server) primary location: {reachable}/{len(names)}")
     print(
         "The rest still exist on disk, on whichever of the OLD 8 servers "
-        "they originally hashed to -- but a lookup that trusts the new "
+        "they originally hashed to, but a lookup that trusts the new "
         "4-server hash table will never look there.\n"
     )
 
@@ -306,7 +306,7 @@ def task_2_5_garbage_collection_after_resize():
     print(f"\nCopies of these files on disk after GC: {after} (removed {before - after} orphan(s))")
     print(
         "\nNote: GC only REMOVES misplaced copies, it doesn't create the "
-        "correct ones -- some files may now be under-replicated at their "
+        "correct ones. Some files may now be under-replicated at their "
         "new-scheme location. That's exactly what Lab 3B's cloud_heal is for."
     )
 
@@ -367,7 +367,7 @@ def task_2_7_mmap():
 
     mib = COMPARE_BYTES / (1024 * 1024)
     print(f"mmap random access (4 KiB slices): {t_mmap:7.3f}s  ({mib / t_mmap:8.1f} MiB/s)")
-    print("Compare this to Task 2.1's random read()/seek() number -- same total bytes, same pattern.")
+    print("Compare this to Task 2.1's random read()/seek() number: same total bytes, same pattern.")
 
 
 def task_2_8_cache_cliff():
@@ -417,9 +417,9 @@ def task_2_8_cache_cliff():
 
 TASKS = {
     "2.1": task_2_1_sequential_vs_random,
-    "2.2": task_2_2_buffered_cached_direct,
-    "2.3": task_2_3_flush,
-    "2.4": task_2_4_queue_depth_sweep,
+    "2.2": task_2_2_flush,
+    "2.3": task_2_3_queue_depth_sweep,
+    "2.4": task_2_4_buffered_cached_direct,
     "2.5": task_2_5_garbage_collection_after_resize,
     "2.6": task_2_6_small_file_tax,
     "2.7": task_2_7_mmap,

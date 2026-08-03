@@ -1,8 +1,8 @@
 """
-cloud_lowlevel.py -- low-level storage primitives (provided, fully working).
+cloud_lowlevel.py: low-level storage primitives (provided, fully working).
 
 Ported from the original cloud.sh (CSC 2025). The 8 "storage servers" are
-addressed by an integer 1-8. Nothing in this file needs to change -- every
+addressed by an integer 1-8. Nothing in this file needs to change; every
 lab builds its cloud_upload / cloud_download / cloud_ls / cloud_rm on top
 of these.
 """
@@ -15,21 +15,21 @@ N_SERVERS = 8
 
 # This course's SSH node already provisions each student 8 real storage
 # directories (server1..server8, split across their 2 physical disks) plus
-# a metadata directory, and exports them as $STEAM_SERVERS / $STEAM_METADATA
-# in every login shell (see steam-allocate.py / welcome.sh.epp in the
-# puppet repo). Use that real infrastructure when it's present, so these
-# exercises run against the SAME servers and metadata directory the rest
-# of the course already set up, rather than a synthetic stand-in. Falls
-# back to a home-relative synthetic layout so the same exercises still run
-# unmodified on a student's own laptop.
-_steam_servers_env = os.environ.get("STEAM_SERVERS")  # "server1 server2 ... server8"
-_steam_metadata_env = os.environ.get("STEAM_METADATA")  # e.g. $HOME/metadata
+# a metadata directory, and exports them as $STEAM_DIRS / $STEAM_METADATA_DIR
+# in every login shell (see gitlab.cern.ch/eos/ops/user_jailing). Use that
+# real infrastructure when it's present, so these exercises run against the
+# SAME servers and metadata directory the rest of the course already set
+# up, rather than a synthetic stand-in. Falls back to a home-relative
+# synthetic layout so the same exercises still run unmodified on a
+# student's own laptop.
+_steam_servers_env = os.environ.get("STEAM_DIRS")
+_steam_metadata_env = os.environ.get("STEAM_METADATA_DIR")
 
 if _steam_servers_env:
     _server_dirnames = _steam_servers_env.split()
     if len(_server_dirnames) != N_SERVERS:
         raise RuntimeError(
-            f"$STEAM_SERVERS lists {len(_server_dirnames)} server(s), expected {N_SERVERS}"
+            f"$STEAM_DIRS lists {len(_server_dirnames)} server(s), expected {N_SERVERS}"
         )
     _SERVER_DIRS = [os.path.expanduser(os.path.join("~", name)) for name in _server_dirnames]
     METADATA_DIR = _steam_metadata_env or os.path.expanduser(os.path.join("~", "metadata"))
@@ -42,7 +42,7 @@ else:
 
 # Every lab uses tempfile.TemporaryDirectory() for small scratch files (EC
 # chunk staging, etc.). Point it at a directory under METADATA_DIR instead
-# of the system default -- METADATA_DIR is guaranteed writable in both
+# of the system default: METADATA_DIR is guaranteed writable in both
 # modes above; the system /tmp is not (see steam-build-jail.sh).
 _SCRATCH_DIR = os.path.join(METADATA_DIR, ".scratch")
 os.makedirs(_SCRATCH_DIR, exist_ok=True)
@@ -73,7 +73,7 @@ def sha1string(s):
 
 def disk_group(server):
     """
-    1 for the first half of servers, 2 for the second half -- mirrors the
+    1 for the first half of servers, 2 for the second half. Mirrors the
     real per-student layout, where each student's 2 physical disks are
     split into servers 1-4 (disk A) and 5-8 (disk B). Used to keep
     replicas from all landing on the same physical disk.
@@ -97,7 +97,7 @@ def unsealname(name):
 
 
 def reset(server):
-    """Wipe a server's contents -- simulates total node loss."""
+    """Wipe a server's contents, simulates total node loss."""
     shutil.rmtree(pathmap(server), ignore_errors=True)
 
 

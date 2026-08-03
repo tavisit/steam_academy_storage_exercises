@@ -1,8 +1,8 @@
 """
-cloud.py -- Lab 1: build a distributed object store on top of cloud_lowlevel.
+cloud.py (Lab 1): build a distributed object store on top of cloud_lowlevel.
 
 Implement the four functions below, in order (1.1 -> 1.2 -> 1.3). Do not
-modify common/cloud_lowlevel.py -- everything you need from it is already
+modify common/cloud_lowlevel.py: everything you need from it is already
 imported for you.
 """
 import os
@@ -23,7 +23,7 @@ from cloud_lowlevel import (  # noqa: E402
 )
 
 # Task 1.2: the metadata directory (a real, separate location from the 8
-# data servers -- see METADATA_DIR) holds the namespace: every filename
+# data servers, see METADATA_DIR) holds the namespace: every filename
 # ever uploaded. cloud_ls needs a single read from here instead of asking
 # all N_SERVERS servers individually.
 BUCKET_INDEX_PATH = os.path.join(METADATA_DIR, "namespace_index")
@@ -40,7 +40,7 @@ def cloud_upload(local_path, cloud_name):
     single dead server AND a single dead disk both survive:
       - the primary server itself.
       - one neighbour on the SAME physical disk (disk_group() tells you
-        which half of the 8 servers -- 1-4 or 5-8 -- a server is on; use
+        which half of the 8 servers, 1-4 or 5-8, a server is on; use
         leftvalue/rightvalue bounded to that half).
       - the mirrored slot on the OTHER physical disk (same position,
         other half: server N <-> server N+4).
@@ -57,7 +57,7 @@ def cloud_download(cloud_name, local_path):
 
     Task 1.3: extend this to fall back through the other 2 replica
     locations (same-disk neighbour, then cross-disk mirror) if the primary
-    doesn't have (or no longer has) the file -- return as soon as one copy
+    doesn't have (or no longer has) the file. Return as soon as one copy
     is found.
     """
     raise NotImplementedError("cloud_download: implement me")

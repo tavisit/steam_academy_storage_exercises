@@ -1,5 +1,5 @@
 """
-Task 1.1 demo -- upload every sample file and see how evenly the DHT spreads
+Task 1.1 demo: upload every sample file and see how evenly the DHT spreads
 them across the 8 servers.
 
 Run after implementing the primary-placement part of cloud_upload:
@@ -22,7 +22,7 @@ PICTURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "picture
 def main():
     files = sorted(glob.glob(os.path.join(PICTURES_DIR, "*")))
     if not files:
-        print("No sample files found -- run make_sample_files.py first.")
+        print("No sample files found, run make_sample_files.py first.")
         return
 
     for path in files:

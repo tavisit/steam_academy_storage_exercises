@@ -1,14 +1,14 @@
 """
-cloud.py -- Lab 1 solution.
+cloud.py (Lab 1): solution.
 """
 import os
 import sys
 
-# walk up from this file until a `common/` sibling turns up -- works
+# walk up from this file until a `common/` sibling turns up: works
 # whether this file stays at its committed depth (.../solutions/) or
 # gets copied up to replace the stub (.../), which is how a working
 # reference implementation gets exercised against the demo scripts.
-# Identical in every solutions/*.py file -- no per-lab depth to tune.
+# Identical in every solutions/*.py file, no per-lab depth to tune.
 _dir = os.path.dirname(os.path.abspath(__file__))
 while not os.path.isdir(os.path.join(_dir, "common")):
     _dir = os.path.dirname(_dir)
@@ -36,7 +36,7 @@ def _primary_server(cloud_name):
 
 def _replica_servers(cloud_name):
     """3 total copies: the primary, one same-disk neighbour, one
-    cross-disk mirror -- survives losing either a single server or an
+    cross-disk mirror. Survives losing either a single server or an
     entire physical disk."""
     primary = _primary_server(cloud_name)
     half = N_SERVERS // 2

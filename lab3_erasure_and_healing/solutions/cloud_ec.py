@@ -1,16 +1,16 @@
 """
-cloud_ec.py -- Lab 3A/3B solution.
+cloud_ec.py (Lab 3A/3B): solution.
 """
 import hashlib
 import os
 import sys
 import tempfile
 
-# walk up from this file until a `common/` sibling turns up -- works
+# walk up from this file until a `common/` sibling turns up: works
 # whether this file stays at its committed depth (.../solutions/) or
 # gets copied up to replace the stub (.../), which is how a working
 # reference implementation gets exercised against the demo scripts.
-# Identical in every solutions/*.py file -- no per-lab depth to tune.
+# Identical in every solutions/*.py file, no per-lab depth to tune.
 _dir = os.path.dirname(os.path.abspath(__file__))
 while not os.path.isdir(os.path.join(_dir, "common")):
     _dir = os.path.dirname(_dir)
@@ -50,7 +50,7 @@ def _ec_servers(cloud_name):
 
 
 # --------------------------------------------------------------------------
-# 3A -- erasure coding
+# 3A: erasure coding
 # --------------------------------------------------------------------------
 
 def cloud_ec_upload(local_path, cloud_name):
@@ -117,7 +117,7 @@ def cloud_ec_download(cloud_name, local_path):
         if len(missing) > 1:
             print(
                 f"EC reconstruction FAILED: {len(missing)} data chunks missing "
-                f"(chunks {missing}) -- a single XOR parity chunk can only "
+                f"(chunks {missing}), a single XOR parity chunk can only "
                 f"recover exactly 1 missing chunk."
             )
             return False
@@ -148,7 +148,7 @@ def cloud_ec_download(cloud_name, local_path):
 
 
 # --------------------------------------------------------------------------
-# 3B -- corruption & self-healing (operates on Lab 1's replicated files)
+# 3B: corruption & self-healing (operates on Lab 1's replicated files)
 # --------------------------------------------------------------------------
 
 def cloud_check(cloud_name):
@@ -195,7 +195,7 @@ def checksum_verify(cloud_name, local_path):
     with tempfile.TemporaryDirectory() as tmp:
         p = os.path.join(tmp, "sha1")
         if not download(primary, f"{cloud_name}.sha1", p):
-            raise FileNotFoundError(f"no stored checksum for '{cloud_name}' -- call checksum_store first")
+            raise FileNotFoundError(f"no stored checksum for '{cloud_name}', call checksum_store first")
         with open(p) as f:
             expected = f.read().strip()
 

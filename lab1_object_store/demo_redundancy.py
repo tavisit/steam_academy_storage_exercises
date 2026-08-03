@@ -1,5 +1,5 @@
 """
-Task 1.3 demo -- upload a file, kill its primary server, and confirm
+Task 1.3 demo: upload a file, kill its primary server, and confirm
 cloud_download still succeeds from a replica.
 
 Run after implementing replication in cloud_upload/cloud_download:

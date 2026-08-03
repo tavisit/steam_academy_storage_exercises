@@ -1,8 +1,8 @@
 """
-analyze_queue_depth.py -- Lab 3C: re-read your own Lab 2 numbers.
+analyze_queue_depth.py (Lab 3C): re-read your own Lab 2 numbers.
 
 Reads ../lab2_measure_your_machine/queue_depth_timings.csv (written by Lab
-2 Task 2.4) and asks harder questions of the exact same data.
+2 Task 2.3) and asks harder questions of the exact same data.
 
     python3 analyze_queue_depth.py
 """
@@ -42,7 +42,7 @@ def summarize(timings_by_depth):
 
 def main():
     if not os.path.exists(CSV_PATH):
-        print(f"{CSV_PATH} not found -- run Lab 2 Task 2.4 first.")
+        print(f"{CSV_PATH} not found, run Lab 2 Task 2.3 first.")
         return
     timings = load_timings()
     summarize(timings)

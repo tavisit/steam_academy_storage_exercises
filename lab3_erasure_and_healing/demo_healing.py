@@ -1,5 +1,5 @@
 """
-3B demo (tasks 1-3) -- upload files with Lab 1's replicated cloud_upload,
+3B demo (tasks 1-3): upload files with Lab 1's replicated cloud_upload,
 fail one node, check what's DEGRADED/LOST, then heal and re-check.
 
 Run after implementing cloud_check/cloud_heal (and after Lab 1's
@@ -28,7 +28,7 @@ FAILED_SERVER = 3
 def main():
     pictures = sorted(glob.glob(os.path.join(LAB1_DIR, "pictures", "*")))[:N_TEST_FILES]
     if len(pictures) < N_TEST_FILES:
-        print("Not enough sample files -- run make_sample_files.py in lab1_object_store/ first.")
+        print("Not enough sample files, run make_sample_files.py in lab1_object_store/ first.")
         return
 
     names = [os.path.basename(p) for p in pictures]
