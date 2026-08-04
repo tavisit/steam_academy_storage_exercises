@@ -3,8 +3,7 @@
 Exercises used for the Storage classes for the STEAM Academy CERN 2026.
 
 Three labs, each following its matching lecture block. Every lab is
-Python 3 (standard library only, `matplotlib` optional for one plot in
-Lab 3), so it runs the same on macOS, Windows and Linux.
+Python 3, so it runs the same on macOS, Windows and Linux.
 
 ## Origin
 
