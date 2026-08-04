@@ -249,14 +249,22 @@ def task_1_6_mmap():
     process's own address space, so you read it by slicing/indexing a
     byte-like object, no read(), no seek(), no syscall per access.
 
+    Only map the first `map_size` bytes of DATA_FILE (4 GiB), not the
+    whole 16 GiB file. mmap's own read-ahead ("fault-around") opportunistically
+    pulls in far more than the 4 KiB you actually touch on each access,
+    so mapping the full file means each account's mmap can end up
+    quietly pulling large chunks of a 16 GiB file into page cache. On a
+    shared course node with many accounts running this at once, that
+    adds up fast; 4 GiB per account keeps it bounded.
+
     TODO, using the variables below:
       1. drop_cache(DATA_FILE), same reason as Task 1.1: otherwise
          you're mapping pages already sitting in RAM, not measuring
          anything about the device.
-      2. Open DATA_FILE and mmap it read-only:
-         mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+      2. Open DATA_FILE and mmap it read-only, `map_size` bytes of it:
+         mmap.mmap(f.fileno(), map_size, access=mmap.ACCESS_READ)
       3. Start a timer and repeat `n_ops` times: pick a random offset
-         between 0 and `file_size - block_rand` (same pattern as Task
+         between 0 and `map_size - block_rand` (same pattern as Task
          1.1's random pass), and read that slice via
          mm[offset : offset + block_rand] instead of f.seek() +
          f.read(). Stop the timer.
@@ -265,7 +273,7 @@ def task_1_6_mmap():
          total bytes, same pattern, different access mechanism.
     """
     block_rand = 4096
-    file_size = os.path.getsize(DATA_FILE)
+    map_size = min(os.path.getsize(DATA_FILE), 4 * 1024 * 1024 * 1024)  # 4 GiB
     n_ops = COMPARE_BYTES // block_rand
 
     raise NotImplementedError("task_1_6_mmap: implement me")

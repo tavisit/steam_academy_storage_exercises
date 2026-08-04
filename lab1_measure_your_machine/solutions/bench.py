@@ -235,17 +235,17 @@ def task_1_5_small_file_tax():
 
 def task_1_6_mmap():
     block_rand = 4096
-    file_size = os.path.getsize(DATA_FILE)
+    map_size = min(os.path.getsize(DATA_FILE), 4 * 1024 * 1024 * 1024)  # 4 GiB
     n_ops = COMPARE_BYTES // block_rand
     rng = random.Random(42)
 
     drop_cache(DATA_FILE)
     t0 = time.perf_counter()
     with open(DATA_FILE, "rb") as f:
-        mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        mm = mmap.mmap(f.fileno(), map_size, access=mmap.ACCESS_READ)
         try:
             for _ in range(n_ops):
-                offset = rng.randrange(0, file_size - block_rand)
+                offset = rng.randrange(0, map_size - block_rand)
                 mm[offset : offset + block_rand]
         finally:
             mm.close()

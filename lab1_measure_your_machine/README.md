@@ -190,12 +190,6 @@ page cache stops being big enough to hide the difference between them.
 Writing up to 16 GiB four times over adds up: measured ~2 minutes total
 on the course node, budget for that.
 
-**Note on the course node specifically:** it has 125 GB of RAM shared
-across every account, so a 16 GiB file comfortably fits in page cache
-regardless of anything else running, and you likely won't see a real
-cliff at these sizes there. Your own laptop, with far less RAM, is the
-better place to actually see this effect.
-
 Implement `task_1_7_cache_cliff`: for each size, write a fresh file (in
 `WORK_DIR`, one at a time, deleting each before moving to the next size),
 then measure sequential throughput and a random-access throughput over
