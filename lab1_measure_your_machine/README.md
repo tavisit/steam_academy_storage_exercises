@@ -12,6 +12,10 @@ every one of those layers yourself, with no framework in the way.
 Lab 3 Part 4, on Day 2.
 
 **Timing note:** most tasks finish in well under a second. A few don't:
+**Task 1.1**'s random-read pass (256 MiB in 4 KiB chunks, forced cold)
+pays a real seek cost on all 65536 reads and is the longest task in this
+lab (measured ~6 minutes on the course node's disks; likely a few
+seconds on a laptop SSD),
 **Task 1.2** forces 2000 real disk syncs (measured ~90 seconds on the
 course node's spinning disks; likely a few seconds on a laptop SSD),
 **Task 1.4** reads the whole 16 GiB file up to 3 times over (cold pass
@@ -185,6 +189,12 @@ task sweeps it: repeat Task 1.1's sequential-vs-random comparison at
 page cache stops being big enough to hide the difference between them.
 Writing up to 16 GiB four times over adds up: measured ~2 minutes total
 on the course node, budget for that.
+
+**Note on the course node specifically:** it has 125 GB of RAM shared
+across every account, so a 16 GiB file comfortably fits in page cache
+regardless of anything else running, and you likely won't see a real
+cliff at these sizes there. Your own laptop, with far less RAM, is the
+better place to actually see this effect.
 
 Implement `task_1_7_cache_cliff`: for each size, write a fresh file (in
 `WORK_DIR`, one at a time, deleting each before moving to the next size),

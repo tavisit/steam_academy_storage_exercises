@@ -100,8 +100,9 @@ def task_1_2_flush():
     t_flush = time.perf_counter() - t0
 
     os.remove(path)
-    print(f"{n_writes} x 4 KiB writes, no flush     : {t_no_flush:7.3f}s")
-    print(f"{n_writes} x 4 KiB writes, flush+fsync   : {t_flush:7.3f}s")
+    mib = (n_writes * len(data)) / (1024 * 1024)
+    print(f"{n_writes} x 4 KiB writes, no flush     : {t_no_flush:7.3f}s  ({mib / t_no_flush:9.1f} MiB/s)")
+    print(f"{n_writes} x 4 KiB writes, flush+fsync   : {t_flush:7.3f}s  ({mib / t_flush:9.1f} MiB/s)")
     print(f"durability tax: {t_flush / t_no_flush:.1f}x slower")
 
 

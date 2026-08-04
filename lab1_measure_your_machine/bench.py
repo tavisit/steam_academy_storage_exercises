@@ -109,7 +109,8 @@ def task_1_2_flush():
          no flush/fsync at all. Time it.
       2. Repeat, but call f.flush() + os.fsync(f.fileno()) after every
          single write. Time it.
-      3. Print both times and the ratio between them.
+      3. Print both times, each pass's throughput (MiB/s), and the ratio
+         between the two times.
     """
     raise NotImplementedError("task_1_2_flush: implement me")
 
