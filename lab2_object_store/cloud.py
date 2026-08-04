@@ -45,9 +45,17 @@ def cloud_upload(local_path, cloud_name):
         leftvalue/rightvalue bounded to that half).
       - the mirrored slot on the OTHER physical disk (same position,
         other half: server N <-> server N+4).
+      Compute that list of (up to) 3 servers, then call
+      upload(local_path, server, cloud_name) once per server in it.
 
-    Task 2.2: also record `cloud_name` in the namespace index (see
-    cloud_ls) so it can be listed later without scanning every server.
+    Task 2.2: also record `cloud_name` in the namespace index so it can
+    be listed later without scanning every server:
+      - Read BUCKET_INDEX_PATH (same approach cloud_ls uses: if it
+        doesn't exist yet, treat it as an empty list of names).
+      - If `cloud_name` isn't already in that list, append it and write
+        the whole list back to BUCKET_INDEX_PATH, one name per line
+        (os.makedirs(METADATA_DIR, exist_ok=True) first, in case this
+        is the very first upload).
     """
     raise NotImplementedError("cloud_upload: implement me")
 
@@ -60,6 +68,10 @@ def cloud_download(cloud_name, local_path):
     locations (same-disk neighbour, then cross-disk mirror) if the primary
     doesn't have (or no longer has) the file. Return as soon as one copy
     is found.
+      - Compute the same (up to) 3-server list cloud_upload uses.
+      - Try download(server, cloud_name, local_path) on each one, in
+        order, and return that server's number as soon as one succeeds.
+      - If none of them have it, return None.
     """
     raise NotImplementedError("cloud_download: implement me")
 
@@ -69,6 +81,12 @@ def cloud_rm(cloud_name):
     Delete `cloud_name` from every server that holds a copy of it (primary,
     and once 2.3 is done, both other replica locations too) and remove it
     from the namespace index.
+      - Call delete(server, cloud_name) for each server in that same
+        (up to) 3-server list, keeping track of which ones actually had
+        a copy (delete() tells you).
+      - Read the namespace index, remove `cloud_name` from it if
+        present, and write it back.
+      - Return the list of servers you actually deleted from.
     """
     raise NotImplementedError("cloud_rm: implement me")
 
@@ -78,6 +96,10 @@ def cloud_ls():
     Task 2.2: list every uploaded filename with a single lookup, by reading
     BUCKET_INDEX_PATH (in the metadata directory) instead of calling
     list_names() on all N_SERVERS servers.
+      - If BUCKET_INDEX_PATH doesn't exist yet (nothing uploaded so
+        far), return an empty list.
+      - Otherwise, return one name per line from that file (strip the
+        trailing newline from each).
     """
     raise NotImplementedError("cloud_ls: implement me")
 
@@ -100,7 +122,9 @@ def h4d(hexchar):
 
     TODO: this is a one-line change to h8d's own formula. h8d divides by
     2 because 16 possible hex values / 8 buckets = 2 values per bucket.
-    How many hex values map to each of the 4 buckets here?
+    How many hex values map to each of the 4 buckets here? Divide
+    int(hexchar, 16) by that number, then add 1 (same as h8d does) so
+    the result lands in 1..4 instead of 0..3.
     """
     raise NotImplementedError("h4d: implement me")
 
@@ -127,17 +151,22 @@ def cloud_gc(dry_run=True):
     again. They're not corrupt or lost, just stranded: unreachable
     through normal lookups, and wasting disk until something cleans them up.
 
-    TODO:
-      1. For each of the N_SERVERS physical servers, get what's stored
-         there (hint: list_names(server), same as you used elsewhere).
-      2. Skip anything _is_collectible() says to skip.
-      3. For everything else, compare the server you're scanning against
-         _current_replica_servers(name), given, already computes the 3
-         correct locations for you. Not in that list means orphan.
-      4. dry_run=True (default): only build and print a report, delete
-         nothing. dry_run=False: also delete(server, name) each orphan.
-
-    Print a per-server orphan count, then a total, and return the report
-    as a list of (server, name) tuples.
+    TODO, using `report` and `per_server_counts` below:
+      1. For each server number from 1 to N_SERVERS:
+         a. Set that server's count in `per_server_counts` to 0.
+         b. For each `name` in list_names(server):
+            - Skip it if not _is_collectible(name).
+            - Otherwise, call _current_replica_servers(name) (given) to
+              get where it SHOULD live. If the server you're currently
+              scanning isn't in that list, it's an orphan: append
+              (server, name) to `report`, bump this server's count in
+              `per_server_counts` by 1, and if dry_run is False, also
+              call delete(server, name).
+      2. Print each server's count from `per_server_counts` (labelled
+         "would delete (dry run)" or "deleted" depending on dry_run),
+         then the total number of entries in `report`. Return `report`.
     """
+    report = []
+    per_server_counts = {}
+
     raise NotImplementedError("cloud_gc: implement me")

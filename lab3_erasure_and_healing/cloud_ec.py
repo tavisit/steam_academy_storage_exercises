@@ -61,9 +61,29 @@ def cloud_ec_upload(local_path, cloud_name):
     chunk size) somewhere recoverable, so cloud_ec_download can trim the
     zero-padding back off on reconstruction.
 
-    Print the storage overhead: (5 * chunk_size) vs the original size,
-    compared to what 3x replication would have cost (200%).
+    TODO, using `data` and `original_size` above:
+      1. Compute `chunk_size` as `original_size` divided by 4, rounded
+         UP (so the last chunk still fits even when original_size isn't
+         a clean multiple of 4). Pad `data` on the right with zero bytes
+         up to `chunk_size * 4`, then slice it into 4 equal pieces.
+      2. XOR the 4 chunks together, byte-for-byte, to get a 5th parity
+         chunk of the same `chunk_size` (hint: int.from_bytes each
+         chunk, XOR the integers, then int.to_bytes back).
+      3. Get your 5 target servers from _ec_servers(cloud_name). Upload
+         each of the 4 data chunks and the parity chunk to one server
+         each, naming them e.g. f"{cloud_name}.chunk0" .. "chunk3" and
+         f"{cloud_name}.parity" (upload() takes a local file, so write
+         each chunk to a temp file first -- tempfile.TemporaryDirectory
+         is convenient here). Also upload a small metadata file (e.g.
+         f"{cloud_name}.meta") containing `original_size` and
+         `chunk_size`, so cloud_ec_download can trim padding later.
+      4. Print the storage overhead: (5 * chunk_size) vs original_size,
+         compared to what 3x replication would have cost (200%).
     """
+    with open(local_path, "rb") as f:
+        data = f.read()
+    original_size = len(data)
+
     raise NotImplementedError("cloud_ec_upload: implement me")
 
 
@@ -76,7 +96,29 @@ def cloud_ec_download(cloud_name, local_path):
         3 surviving data chunks with the parity chunk.
       - If 2 or more data chunks are missing: this scheme cannot recover.
         Print why and return without writing `local_path`.
+
+    TODO, using `servers` above:
+      1. Download the metadata file (servers[0], f"{cloud_name}.meta")
+         to get back `original_size` and `chunk_size`. If it's missing,
+         print why and return False.
+      2. Try to download each of the 4 data chunks
+         (servers[0..3], f"{cloud_name}.chunk0".."chunk3"), keeping
+         track of which indices actually came back (a list of 4 slots,
+         some possibly None, works well).
+      3. If more than 1 is missing: print which chunk indices are
+         missing and that a single parity chunk can't recover more than
+         1, then return False.
+      4. If exactly 1 is missing: download the parity chunk
+         (servers[4], f"{cloud_name}.parity"). XOR it together with the
+         3 surviving data chunks (same XOR trick as upload) to
+         reconstruct the missing one.
+      5. Concatenate all 4 data chunks in order, trim to `original_size`
+         (this removes the zero-padding from upload), write the result
+         to `local_path`, print the overhead percentage again, and
+         return True.
     """
+    servers = _ec_servers(cloud_name)
+
     raise NotImplementedError("cloud_ec_download: implement me")
 
 
@@ -89,7 +131,14 @@ def cloud_check(cloud_name):
     Task 3.2.1: return "OK" if all 3 replica locations
     (see _replica_servers) have the file, "DEGRADED" if some do, "LOST" if
     none do.
+
+    TODO, using `servers` above: for each server in `servers`, check
+    whether `cloud_name` is in list_names(server). Count how many say
+    yes. All of them -> "OK". None of them -> "LOST". Anything in
+    between -> "DEGRADED".
     """
+    servers = _replica_servers(cloud_name)
+
     raise NotImplementedError("cloud_check: implement me")
 
 
@@ -99,7 +148,17 @@ def cloud_heal(cloud_name):
     still has it, and re-upload it to whichever replica location(s) are
     missing it, restoring 3 total copies. Return False if the file is
     LOST (no surviving replica to heal from).
+
+    TODO, using `servers` above:
+      1. Split `servers` into those that currently have the file and
+         those that don't (list_names(server) again).
+      2. If none have it, return False.
+      3. Otherwise, download it once from any server that has it (a
+         temp file works well here), then upload that copy to each
+         server that was missing it. Return True.
     """
+    servers = _replica_servers(cloud_name)
+
     raise NotImplementedError("cloud_heal: implement me")
 
 
@@ -109,7 +168,14 @@ def checksum_store(cloud_name, local_path):
     alongside the replicas (e.g. upload it as `cloud_name + '.sha1'` to
     the same servers cloud_check looks at, or just the primary, your
     choice, as long as checksum_verify can find it again).
+
+    TODO, using `primary` above: read `local_path`'s bytes, run them
+    through hashlib.sha1(...).hexdigest() to get `digest`, write
+    `digest` to a temp file and upload() it to `primary` as
+    f"{cloud_name}.sha1". Return `digest`.
     """
+    primary = _replica_servers(cloud_name)[0]
+
     raise NotImplementedError("checksum_store: implement me")
 
 
@@ -119,5 +185,13 @@ def checksum_verify(cloud_name, local_path):
     downloaded) and compare it against what checksum_store saved. Return
     True/False. This is the check cloud_check does NOT do: cloud_check
     only confirms a copy *exists*, not that its bytes are still correct.
+
+    TODO, using `primary` above: download(primary, f"{cloud_name}.sha1",
+    ...) to get the checksum `checksum_store` saved (if it's missing,
+    that means checksum_store was never called -- raise
+    FileNotFoundError). Recompute local_path's SHA-1 the same way
+    checksum_store did, and return whether the two hex digests match.
     """
+    primary = _replica_servers(cloud_name)[0]
+
     raise NotImplementedError("checksum_verify: implement me")

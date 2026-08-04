@@ -85,18 +85,26 @@ def task_1_1_sequential_vs_random():
     data your first pass just cached). Otherwise you're comparing two
     RAM-speed reads, not real device behavior.
 
-    TODO:
-      1. drop_cache(DATA_FILE), then read the first COMPARE_BYTES of
-         DATA_FILE sequentially in 1 MiB chunks. Time it.
-      2. drop_cache(DATA_FILE) again, then read COMPARE_BYTES // 4096
-         random 4 KiB chunks from DATA_FILE
-         (random offset each time, via f.seek()), same total bytes as
-         step 1, just moved differently (see the note above
-         COMPARE_BYTES for why this is capped well below DATA_SIZE). Time
-         it.
-      3. Print both throughputs (MiB/s). Same total bytes moved either
-         way; the only difference is block size and access pattern.
+    TODO, using the variables below:
+      1. drop_cache(DATA_FILE). Open DATA_FILE for reading, start a
+         timer, and read forward through it in `block_seq`-sized chunks
+         until you've read COMPARE_BYTES total (the last chunk may be
+         smaller than block_seq if it doesn't divide evenly). Stop the
+         timer -> t_seq.
+      2. drop_cache(DATA_FILE) again. Open DATA_FILE for reading, start
+         a timer, and repeat `n_ops` times: pick a random offset between
+         0 and `file_size - block_rand`, seek there, read `block_rand`
+         bytes. Stop the timer -> t_rand.
+      3. Compute each pass's throughput: COMPARE_BYTES in MiB, divided
+         by its own time. Print both throughputs (MiB/s) and how many
+         times slower random was. Same total bytes moved either way;
+         the only difference is block size and access pattern.
     """
+    block_seq = 1024 * 1024
+    block_rand = 4096
+    file_size = os.path.getsize(DATA_FILE)
+    n_ops = COMPARE_BYTES // block_rand
+
     raise NotImplementedError("task_1_1_sequential_vs_random: implement me")
 
 
@@ -104,14 +112,23 @@ def task_1_2_flush():
     """
     Task 1.2: write loop, with and without an explicit flush.
 
-    TODO:
-      1. Open a fresh file, write N small blocks (e.g. 2000 x 4 KiB) with
-         no flush/fsync at all. Time it.
-      2. Repeat, but call f.flush() + os.fsync(f.fileno()) after every
-         single write. Time it.
-      3. Print both times, each pass's throughput (MiB/s), and the ratio
-         between the two times.
+    TODO, using the variables below:
+      1. Open `path` for writing, start a timer, and write `data` to it
+         `n_writes` times back to back, no flush/fsync at all. Stop the
+         timer -> t_no_flush.
+      2. Open `path` for writing again (overwriting it), start a timer,
+         and write `data` `n_writes` times again, but call f.flush()
+         then os.fsync(f.fileno()) after EVERY single write. Stop the
+         timer -> t_flush.
+      3. Delete `path`. Compute each pass's throughput: (n_writes *
+         len(data)) in MiB, divided by its own time. Print both times,
+         both throughputs, and t_flush / t_no_flush as the "durability
+         tax".
     """
+    path = os.path.join(WORK_DIR, "bench_flush.bin")
+    n_writes = 2000
+    data = os.urandom(4096)
+
     raise NotImplementedError("task_1_2_flush: implement me")
 
 
@@ -126,19 +143,34 @@ def task_1_3_queue_depth_sweep():
     Lab 3 Part 4's TODO below is that turning point: the depth where more
     concurrency stops buying more throughput.
 
-    TODO:
-      1. For each depth in (1, 4, 16, 64, 256): issue a batch of random
-         4 KiB reads against DATA_FILE using that many concurrent workers
-         (concurrent.futures.ThreadPoolExecutor is fine here: this is an
-         approximation of true queue depth, which really needs async I/O
-         (hint: think io_uring/AIO), but the throughput/latency trend it
-         shows is the real thing).
-      2. Record EVERY individual operation's latency, not just the mean.
-      3. Print throughput and mean latency per depth.
-      4. Write every (queue_depth, latency) pair to a CSV file. Lab 3
-         Part 4 needs this file to compute p50/p95/p99 and to find the
-         "knee".
+    TODO, using the variables below:
+      1. For each depth in `levels`:
+         a. Pick `ops_per_level` random offsets into DATA_FILE, each
+            between 0 and `file_size - block_size`.
+         b. Using a thread pool of `depth` workers
+            (concurrent.futures.ThreadPoolExecutor is fine here: an
+            approximation of true queue depth, which really needs async
+            I/O -- hint: think io_uring/AIO -- but the throughput/latency
+            trend it shows is the real thing), issue one `block_size`
+            read at each offset, up to `depth` running concurrently.
+            Record the wall-clock start and end of the WHOLE batch (for
+            throughput), and the individual duration of EACH read (for
+            latency) -- keep every one of those, not just their average.
+         c. Compute this depth's throughput: (ops_per_level * block_size)
+            in MiB, divided by the batch's wall-clock time. Compute the
+            mean of the per-op latencies. Print depth, throughput, mean
+            latency.
+      2. After the loop, write every (depth, latency) pair you collected
+         across ALL depths to `csv_path`, one row per individual
+         operation, with a header row. Lab 3 Part 4 needs this exact
+         file to compute p50/p95/p99 and find the "knee".
     """
+    block_size = 4096
+    ops_per_level = 500
+    levels = (1, 4, 16, 64, 256)
+    csv_path = "queue_depth_timings.csv"
+    file_size = os.path.getsize(DATA_FILE)
+
     raise NotImplementedError("task_1_3_queue_depth_sweep: implement me")
 
 
@@ -151,23 +183,30 @@ def task_1_4_buffered_cached_direct():
     instead of the device. O_DIRECT is the flag that opts a file out of
     that: every read/write goes straight to the device.)
 
-    TODO:
-      1. Read DATA_FILE once with a normal buffered open(). This is a
-         "cold-ish" read (may already be page-cached from setup, note that).
-      2. Read it again immediately with the same method. This should be
-         served largely from the page cache and be much faster.
-      3. If `os.O_DIRECT` exists on this platform (Linux only), open the
-         file with `os.open(path, os.O_RDONLY | os.O_DIRECT)` and read
-         into a page-aligned buffer: O_DIRECT rejects reads into a
-         buffer that isn't aligned to the device's block size. An
-         anonymous `mmap.mmap(-1, size)` region is page-aligned on every
-         platform that supports O_DIRECT in the first place, so it's a
-         one-line way to get an aligned buffer without ctypes; use
-         `os.readv(fd, [buf])` to read into it. This bypasses the page
-         cache entirely. If O_DIRECT isn't available, print that and
-         skip step 3.
-      4. Print all the throughputs you measured.
+    TODO, using `block` below:
+      1. Open DATA_FILE with a normal buffered open(), start a timer,
+         and read it from start to end in `block`-sized chunks until
+         exhausted. Stop the timer -> t_buffered. This is a "cold-ish"
+         read (may already be page-cached from setup, note that).
+      2. Repeat step 1 immediately: same file, same method, fresh timer
+         -> t_cached. This should be noticeably faster: the page cache
+         is doing the work now.
+      3. If `os.O_DIRECT` exists on this platform (Linux only): open the
+         file with `os.open(path, os.O_RDONLY | os.O_DIRECT)`, allocate
+         a page-aligned buffer (O_DIRECT rejects reads into a buffer
+         that isn't aligned to the device's block size; an anonymous
+         `mmap.mmap(-1, block)` region is page-aligned on every platform
+         that supports O_DIRECT in the first place, so it's a one-line
+         way to get one without ctypes), start a timer, and read the
+         whole file into that buffer via `os.readv(fd, [buf])` in a loop
+         until a read returns 0. Stop the timer -> t_direct. This
+         bypasses the page cache entirely. If O_DIRECT isn't available,
+         print that and skip this step.
+      4. Print all the throughputs you measured (DATA_SIZE in MiB
+         divided by each time).
     """
+    block = 1024 * 1024
+
     raise NotImplementedError("task_1_4_buffered_cached_direct: implement me")
 
 
@@ -181,15 +220,24 @@ def task_1_5_small_file_tax():
     "metadata tax" this task measures: same total bytes, but split across
     more and more files.
 
-    TODO:
-      1. For file counts (1, 100, 10000): write the SAME total number of
-         bytes (e.g. 100 MB), split evenly across that many files in a
-         fresh directory.
-      2. Time the writing.
-      3. Then time just LISTING that directory (os.listdir()).
-      4. Print write time and list time for each file count. The data
-         volume is constant; only the metadata cost changes.
+    TODO, using the variables below, for each count in `counts`:
+      1. Make a fresh subdirectory of `base_dir` (one per count works
+         well, e.g. named after the count itself), and compute
+         `size_each = total_bytes // count`.
+      2. Start a timer and write `count` files into that directory, each
+         holding `size_each` bytes (content doesn't matter, os.urandom
+         is fine). Stop the timer -> write time.
+      3. Start a timer and call os.listdir() on that directory. Stop the
+         timer -> list time.
+      4. Print the count, write time, and list time. The data volume is
+         constant across all three counts; only the metadata cost
+         changes.
     """
+    total_mb = 100
+    counts = (1, 100, 10_000)
+    base_dir = os.path.join(WORK_DIR, "small_file_tax")
+    total_bytes = total_mb * 1024 * 1024
+
     raise NotImplementedError("task_1_5_small_file_tax: implement me")
 
 
@@ -201,20 +249,25 @@ def task_1_6_mmap():
     process's own address space, so you read it by slicing/indexing a
     byte-like object, no read(), no seek(), no syscall per access.
 
-    TODO:
+    TODO, using the variables below:
       1. drop_cache(DATA_FILE), same reason as Task 1.1: otherwise
          you're mapping pages already sitting in RAM, not measuring
          anything about the device.
       2. Open DATA_FILE and mmap it read-only:
          mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-      3. Repeat Task 1.1's random-access pattern EXACTLY (same
-         COMPARE_BYTES // 4096 ops, same 4 KiB block size) but read each
-         block by slicing the mapped object (mm[offset : offset + 4096])
-         instead of f.seek() + f.read(). Time it.
-      4. Print the throughput and compare it to Task 1.1's random-read
-         number: same total bytes, same pattern, different access
-         mechanism.
+      3. Start a timer and repeat `n_ops` times: pick a random offset
+         between 0 and `file_size - block_rand` (same pattern as Task
+         1.1's random pass), and read that slice via
+         mm[offset : offset + block_rand] instead of f.seek() +
+         f.read(). Stop the timer.
+      4. Print the throughput (COMPARE_BYTES in MiB divided by the
+         time) and compare it to Task 1.1's random-read number: same
+         total bytes, same pattern, different access mechanism.
     """
+    block_rand = 4096
+    file_size = os.path.getsize(DATA_FILE)
+    n_ops = COMPARE_BYTES // block_rand
+
     raise NotImplementedError("task_1_6_mmap: implement me")
 
 
@@ -227,25 +280,38 @@ def task_1_7_cache_cliff():
     files (up to 16 GiB) and reading each one twice takes real
     wall-clock time, budget for that.
 
-    TODO: for each size in (16 MiB, 256 MiB, 1 GiB, 16 GiB):
-      1. Write a FRESH file of that size in WORK_DIR (reuse
-         ensure_test_file with a distinct path per size; don't reuse
-         DATA_FILE, and don't keep more than one size's file on disk at
-         once, or you'll multiply Lab 1's already-sizeable footprint).
-      2. Read it sequentially in 1 MiB chunks (the whole file, same idea
-         as Task 1.1).
-      3. Read min(size, COMPARE_BYTES) // 4096 random 4 KiB chunks: same
+    TODO, using the variables below, for each (label, size) in `sizes`:
+      1. Call ensure_test_file(path, size) to write a FRESH file of
+         exactly `size` bytes at `path` (don't reuse DATA_FILE, and
+         don't keep more than one size's file on disk at once, or
+         you'll multiply Lab 1's already-sizeable footprint).
+      2. Start a timer and read the whole file sequentially in
+         `block_seq`-sized chunks (same idea as Task 1.1). Stop the
+         timer -> t_seq.
+      3. Compute `n_ops = min(size, COMPARE_BYTES) // block_rand`: same
          total bytes as the sequential pass whenever size fits under
          COMPARE_BYTES (e.g. the 16 MiB step), otherwise capped at
          COMPARE_BYTES for the same reason Task 1.1 caps it (a real scan
          of the full 16 GiB step would mean millions of disk seeks).
-      4. Print both throughputs for this size, then delete the file
-         before moving to the next size.
+         Start a timer and read `n_ops` random `block_rand`-byte chunks
+         at random offsets into the file. Stop the timer -> t_rand.
+      4. Print `label`, both throughputs, and their ratio, then delete
+         `path` before moving to the next size.
 
     Question: at what size does random throughput start noticeably
     diverging from sequential? Does that line up with your machine's
     RAM?
     """
+    sizes = [
+        ("16 MiB", 16 * 1024 * 1024),
+        ("256 MiB", 256 * 1024 * 1024),
+        ("1 GiB", 1024 * 1024 * 1024),
+        ("16 GiB", 16 * 1024 * 1024 * 1024),
+    ]
+    block_seq = 1024 * 1024
+    block_rand = 4096
+    path = os.path.join(WORK_DIR, "cache_cliff.bin")
+
     raise NotImplementedError("task_1_7_cache_cliff: implement me")
 
 
