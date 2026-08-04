@@ -1,5 +1,5 @@
 """
-3A demo: upload a file with erasure coding, delete one chunk and
+Part 2 demo: upload a file with erasure coding, delete one chunk and
 reconstruct it, then delete two chunks and show that fails.
 
 Run after implementing cloud_ec_upload/cloud_ec_download:

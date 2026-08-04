@@ -1,5 +1,5 @@
 """
-Task 1.2 demo: compare cloud_ls() (one lookup) against a brute-force scan
+Task 2.2 demo: compare cloud_ls() (one lookup) against a brute-force scan
 of every server (N_SERVERS lookups), and check they agree.
 
 Run after implementing cloud_ls():

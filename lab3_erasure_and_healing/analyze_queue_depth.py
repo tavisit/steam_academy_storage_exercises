@@ -1,8 +1,8 @@
 """
-analyze_queue_depth.py (Lab 3C): re-read your own Lab 2 numbers.
+analyze_queue_depth.py (Lab 3 Part 4): re-read your own Lab 1 numbers.
 
-Reads ../lab2_measure_your_machine/queue_depth_timings.csv (written by Lab
-2 Task 2.3) and asks harder questions of the exact same data.
+Reads ../lab1_measure_your_machine/queue_depth_timings.csv (written by Lab
+1 Task 1.3) and asks harder questions of the exact same data.
 
     python3 analyze_queue_depth.py
 """
@@ -11,13 +11,13 @@ import os
 
 CSV_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "..", "lab2_measure_your_machine", "queue_depth_timings.csv",
+    "..", "lab1_measure_your_machine", "queue_depth_timings.csv",
 )
 
 
 def load_timings():
     """
-    Task 3C, setup: read CSV_PATH (columns: queue_depth, latency_s) and
+    Task 3.3.1, setup: read CSV_PATH (columns: queue_depth, latency_s) and
     return {queue_depth: [latency_s, latency_s, ...]}.
     """
     raise NotImplementedError("load_timings: implement me")
@@ -25,13 +25,14 @@ def load_timings():
 
 def summarize(timings_by_depth):
     """
-    Task 3C.1/3C.2: for each queue depth (sorted), compute and print:
+    Task 3.3.1, questions 3.3.1a/3.3.1b: for each queue depth (sorted),
+    compute and print:
       - number of samples
       - mean latency
       - p50, p95, p99 latency (sort the samples, index by percentile)
       - a throughput estimate: depth / mean(latency_seconds)
 
-    Task 3C.1 (the "knee"): find the depth where throughput stops
+    Question 3.3.1a (the "knee"): find the depth where throughput stops
     meaningfully increasing even though latency keeps climbing.
 
     Optional: if matplotlib is installed, plot throughput and p99 latency
@@ -42,7 +43,7 @@ def summarize(timings_by_depth):
 
 def main():
     if not os.path.exists(CSV_PATH):
-        print(f"{CSV_PATH} not found, run Lab 2 Task 2.3 first.")
+        print(f"{CSV_PATH} not found, run Lab 1 Task 1.3 first.")
         return
     timings = load_timings()
     summarize(timings)

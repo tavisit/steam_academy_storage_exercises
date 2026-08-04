@@ -1,6 +1,4 @@
-# Lab 1: Build a Distributed Object Store
-
-*60 minutes · after Storage Foundations*
+# Lab 2: Build a Distributed Object Store
 
 ## Background
 
@@ -28,11 +26,11 @@ it to see what's available.
 Generate the 128 sample files every task in this lab uploads:
 
 ```bash
-cd lab1_object_store
+cd lab2_object_store
 python3 make_sample_files.py
 ```
 
-## Part 2: Task 1.1: A Distributed Hash Table (DHT)
+## Part 2: Task 2.1: A Distributed Hash Table (DHT)
 
 Open `cloud.py`. Implement `cloud_upload` and `cloud_download` so that a
 file is placed on exactly one server, chosen like this:
@@ -52,19 +50,19 @@ land:
 python3 demo_distribution.py
 ```
 
-**Record the per-server counts here** (do this now, right after Task 1.1,
-since Task 1.3 adds replication, which will roughly triple every count if
+**Record the per-server counts here** (do this now, right after Task 2.1,
+since Task 2.3 adds replication, which will roughly triple every count if
 you re-run this demo later):
 
 | server | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
 | files | | | | | | | | |
 
-**Question 1.1:** SHA-1 is supposed to be uniform. Is the distribution you
+**Question 2.1:** SHA-1 is supposed to be uniform. Is the distribution you
 just measured actually even? If not, is that a bug in your code, or exactly
 what you'd expect from hashing only 128 items into 8 buckets?
 
-## Part 3: Task 1.2: Bucket / Namespace
+## Part 3: Task 2.2: Bucket / Namespace
 
 Right now, listing every uploaded file would mean asking all 8 servers.
 Implement `cloud_ls` instead to use the **metadata directory**
@@ -85,12 +83,12 @@ python3 demo_bucket.py
 It should report a **match** between `cloud_ls()` and the brute-force scan,
 with `cloud_ls()` needing 1 lookup instead of 8.
 
-**Question 1.2:** You gained one lookup instead of eight. What did you
+**Question 2.2:** You gained one lookup instead of eight. What did you
 lose? (Hint: none of the 8 data servers holds anything special anymore,
 but is that true of the metadata directory too? What happens to every
 single upload/list/delete if it's slow, full, or down?)
 
-## Part 4: Task 1.3: Redundancy
+## Part 4: Task 2.3: Redundancy
 
 A single primary server is a single point of failure, and on this node,
 servers 1-4 sit on one physical disk and 5-8 on the other, so "one dead
@@ -123,17 +121,56 @@ server's count will jump to roughly 3x what you recorded above, since
 expected, not a bug: you just tripled how many copies of each file
 exist.)
 
-**Question 1.3:** Should `cloud_download` always prefer the primary
+**Question 2.3a:** Should `cloud_download` always prefer the primary
 replica, or pick one of the three at random? Argue both sides.
 
-**Question 1.4:** Of your 2 non-primary copies, one is same-disk and one
+**Question 2.3b:** Of your 2 non-primary copies, one is same-disk and one
 is cross-disk. Which one actually protects you against a whole-disk
 failure? What's the same-disk copy still buying you, then, if the
 cross-disk one already covers the worse failure?
 
+## Part 5: Task 2.4: Garbage Collection After a Resize
+
+Real distributed hash tables get resized: servers get added or removed.
+When that happens without also moving data, some copies end up sitting on
+servers that are no longer "correct" for their key: not discoverable
+through the new placement logic, and not cleaned up either.
+
+In `cloud.py`, implement:
+
+- `h4d(hexchar)`: maps a hex character to a bucket **1–4**, the same way
+  `h8d` maps to 1–8.
+- `cloud_gc(dry_run=True)`: walks every one of the 8 physical servers,
+  recomputes each stored file's correct location under the *current*
+  (4-server) hash table, and reports any copy sitting somewhere it no
+  longer belongs. With `dry_run=False`, it also deletes those orphans.
+
+```bash
+python3 demo_gc.py
+```
+
+This first shows the resize problem (`cloud_ls()` still lists every name,
+but most are no longer reachable at the location a 4-server hash function
+would compute for them), then a dry run that reports orphans without
+changing anything, then an actual GC pass that removes them and reduces
+the total number of physical copies on disk.
+
+**Question 2.4a:** Why implement the dry-run report *before* the
+destructive version, rather than the other way around? What would a bug
+in `h4d` do to a destructive-only `cloud_gc`?
+
+**Question 2.4b:** The task notes that `cloud_gc` only *removes*
+misplaced copies, it doesn't *create* the correct ones. After GC, could
+some files now be under-replicated at their new-scheme location? What
+already-built tool from Lab 3 fixes that?
+
+**Question 2.4c:** What could go wrong if `cloud_gc` ran
+*concurrently* with a client still uploading or downloading a file?
+
 ## Wrapping up
 
 By the end of this lab your `cloud.py` has independently reinvented a
-metadata service (the namespace index) and a replication scheme (the
-three-way, disk-aware mirror). Keep your working `cloud.py`. Lab 3 builds
-directly on top of it.
+metadata service (the namespace index), a replication scheme (the
+three-way, disk-aware mirror), and a garbage collector for the orphans a
+resize leaves behind. Keep your working `cloud.py`. Lab 3 builds directly
+on top of it.

@@ -1,8 +1,8 @@
 """
-cloud_ec.py (Lab 3A, erasure coding; Lab 3B, corruption & self-healing).
+cloud_ec.py (Lab 3 Part 2, erasure coding; Part 3, corruption & self-healing).
 
-Builds directly on your Lab 1 cloud.py: cloud_check/cloud_heal operate on
-files uploaded with Lab 1's replicated cloud_upload (primary + same-disk
+Builds directly on your Lab 2 cloud.py: cloud_check/cloud_heal operate on
+files uploaded with Lab 2's replicated cloud_upload (primary + same-disk
 neighbour + cross-disk mirror). Erasure coding is a separate, independent
 scheme on the same 8 servers.
 """
@@ -29,7 +29,7 @@ from cloud_lowlevel import (  # noqa: E402
 
 def _replica_servers(cloud_name):
     """Same primary + same-disk neighbour + cross-disk mirror formula you
-    built in Lab 1's cloud_upload."""
+    built in Lab 2's cloud_upload."""
     primary = h8d(sha1string(cloud_name)[0])
     half = N_SERVERS // 2
     if disk_group(primary) == 1:
@@ -49,12 +49,12 @@ def _ec_servers(cloud_name):
 
 
 # --------------------------------------------------------------------------
-# 3A: erasure coding
+# Part 2: erasure coding
 # --------------------------------------------------------------------------
 
 def cloud_ec_upload(local_path, cloud_name):
     """
-    Task 3A.1: split `local_path` into 4 equal-size chunks (zero-pad the
+    Task 3.1.1: split `local_path` into 4 equal-size chunks (zero-pad the
     last one so all 4 are the same length), XOR them together to compute a
     5th parity chunk, and upload all 5 chunks to 5 different servers
     (see _ec_servers). Also store enough metadata (original file size,
@@ -69,7 +69,7 @@ def cloud_ec_upload(local_path, cloud_name):
 
 def cloud_ec_download(cloud_name, local_path):
     """
-    Task 3A.2/3.3/3.4: fetch whatever chunks are available.
+    Task 3.1.2/3.1.3/3.1.4: fetch whatever chunks are available.
       - If all 4 data chunks are present: concatenate and trim to the
         original size.
       - If exactly 1 data chunk is missing: reconstruct it by XOR-ing the
@@ -81,12 +81,12 @@ def cloud_ec_download(cloud_name, local_path):
 
 
 # --------------------------------------------------------------------------
-# 3B: corruption & self-healing (operates on Lab 1's replicated files)
+# Part 3: corruption & self-healing (operates on Lab 2's replicated files)
 # --------------------------------------------------------------------------
 
 def cloud_check(cloud_name):
     """
-    Task 3B.1: return "OK" if all 3 replica locations
+    Task 3.2.1: return "OK" if all 3 replica locations
     (see _replica_servers) have the file, "DEGRADED" if some do, "LOST" if
     none do.
     """
@@ -95,7 +95,7 @@ def cloud_check(cloud_name):
 
 def cloud_heal(cloud_name):
     """
-    Task 3B.3: for a DEGRADED file, download it from whichever replica
+    Task 3.2.3: for a DEGRADED file, download it from whichever replica
     still has it, and re-upload it to whichever replica location(s) are
     missing it, restoring 3 total copies. Return False if the file is
     LOST (no surviving replica to heal from).
@@ -105,7 +105,7 @@ def cloud_heal(cloud_name):
 
 def checksum_store(cloud_name, local_path):
     """
-    Task 3B.4: compute a SHA-1 checksum of `local_path` and store it
+    Task 3.2.4: compute a SHA-1 checksum of `local_path` and store it
     alongside the replicas (e.g. upload it as `cloud_name + '.sha1'` to
     the same servers cloud_check looks at, or just the primary, your
     choice, as long as checksum_verify can find it again).
@@ -115,7 +115,7 @@ def checksum_store(cloud_name, local_path):
 
 def checksum_verify(cloud_name, local_path):
     """
-    Task 3B.4: recompute the checksum of `local_path` (a copy you just
+    Task 3.2.4: recompute the checksum of `local_path` (a copy you just
     downloaded) and compare it against what checksum_store saved. Return
     True/False. This is the check cloud_check does NOT do: cloud_check
     only confirms a copy *exists*, not that its bytes are still correct.

@@ -1,5 +1,5 @@
 """
-cloud.py (Lab 1): solution.
+cloud.py (Lab 2): solution.
 """
 import os
 import sys
@@ -21,12 +21,15 @@ from cloud_lowlevel import (  # noqa: E402
     download,
     h8d,
     leftvalue,
+    list_names,
     rightvalue,
     sha1string,
     upload,
 )
 
 BUCKET_INDEX_PATH = os.path.join(METADATA_DIR, "namespace_index")
+_SKIP_SUFFIXES = (".chunk0", ".chunk1", ".chunk2", ".chunk3", ".parity", ".meta", ".sha1")
+NEW_RING_SIZE = 4
 
 
 def _primary_server(cloud_name):
@@ -93,3 +96,39 @@ def cloud_rm(cloud_name):
 
 def cloud_ls():
     return _read_bucket_index()
+
+
+def h4d(hexchar):
+    return int(hexchar, 16) // 4 + 1
+
+
+def _current_replica_servers(cloud_name):
+    primary = h4d(sha1string(cloud_name)[0])
+    return [primary, leftvalue(primary, 1, NEW_RING_SIZE), rightvalue(primary, 1, NEW_RING_SIZE)]
+
+
+def _is_collectible(name):
+    return not name.endswith(_SKIP_SUFFIXES)
+
+
+def cloud_gc(dry_run=True):
+    report = []
+    per_server_counts = {}
+
+    for server in range(1, N_SERVERS + 1):
+        orphans_here = 0
+        for name in list_names(server):
+            if not _is_collectible(name):
+                continue
+            if server not in _current_replica_servers(name):
+                orphans_here += 1
+                report.append((server, name))
+                if not dry_run:
+                    delete(server, name)
+        per_server_counts[server] = orphans_here
+
+    mode = "would delete (dry run)" if dry_run else "deleted"
+    for server, count in per_server_counts.items():
+        print(f"server {server}: {count} orphan(s) {mode}")
+    print(f"\nTotal: {len(report)} orphan(s) {'found' if dry_run else 'removed'}.")
+    return report

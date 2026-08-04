@@ -1,5 +1,5 @@
 """
-analyze_queue_depth.py (Lab 3C): solution.
+analyze_queue_depth.py (Lab 3 Part 4): solution.
 
     python3 analyze_queue_depth.py
 """
@@ -15,7 +15,7 @@ from collections import defaultdict
 _dir = os.path.dirname(os.path.abspath(__file__))
 while not os.path.isdir(os.path.join(_dir, "common")):
     _dir = os.path.dirname(_dir)
-CSV_PATH = os.path.join(_dir, "lab2_measure_your_machine", "queue_depth_timings.csv")
+CSV_PATH = os.path.join(_dir, "lab1_measure_your_machine", "queue_depth_timings.csv")
 
 
 def load_timings():
@@ -93,7 +93,7 @@ def summarize(timings_by_depth):
 
 def main():
     if not os.path.exists(CSV_PATH):
-        print(f"{CSV_PATH} not found, run Lab 2 Task 2.3 first.")
+        print(f"{CSV_PATH} not found, run Lab 1 Task 1.3 first.")
         return
     timings = load_timings()
     summarize(timings)

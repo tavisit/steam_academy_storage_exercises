@@ -1,5 +1,5 @@
 """
-cloud_ec.py (Lab 3A/3B): solution.
+cloud_ec.py (Lab 3 Parts 2/3): solution.
 """
 import hashlib
 import os
@@ -50,7 +50,7 @@ def _ec_servers(cloud_name):
 
 
 # --------------------------------------------------------------------------
-# 3A: erasure coding
+# Part 2: erasure coding
 # --------------------------------------------------------------------------
 
 def cloud_ec_upload(local_path, cloud_name):
@@ -148,7 +148,7 @@ def cloud_ec_download(cloud_name, local_path):
 
 
 # --------------------------------------------------------------------------
-# 3B: corruption & self-healing (operates on Lab 1's replicated files)
+# Part 3: corruption & self-healing (operates on Lab 2's replicated files)
 # --------------------------------------------------------------------------
 
 def cloud_check(cloud_name):

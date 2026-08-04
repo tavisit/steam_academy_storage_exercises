@@ -1,25 +1,22 @@
 """
-bench.py (Lab 2): solution.
+bench.py (Lab 1): solution.
 
-    python3 bench.py 2.1
-    python3 bench.py 2.2
-    python3 bench.py 2.3
-    python3 bench.py 2.4
-    python3 bench.py 2.5
-    python3 bench.py 2.6
-    python3 bench.py 2.7
-    python3 bench.py 2.8
+    python3 bench.py 1.1
+    python3 bench.py 1.2
+    python3 bench.py 1.3
+    python3 bench.py 1.4
+    python3 bench.py 1.5
+    python3 bench.py 1.6
+    python3 bench.py 1.7
 """
 import argparse
 import concurrent.futures
 import csv
-import glob
 import mmap
 import os
 import random
 import shutil
 import statistics
-import sys
 import time
 
 DATA_SIZE = 16 * 1024 * 1024 * 1024  # 16 GiB
@@ -27,30 +24,6 @@ WORK_DIR = os.environ.get("STEAM_SCRATCH_DIR") or "."
 os.makedirs(WORK_DIR, exist_ok=True)
 DATA_FILE = os.path.join(WORK_DIR, "bench_data.bin")
 COMPARE_BYTES = 256 * 1024 * 1024
-
-# walk up from this file until a `common/` sibling turns up: works
-# whether this file stays at its committed depth (.../solutions/) or
-# gets copied up to replace the stub (.../), same as every other
-# solutions/*.py file
-_dir = os.path.dirname(os.path.abspath(__file__))
-while not os.path.isdir(os.path.join(_dir, "common")):
-    _dir = os.path.dirname(_dir)
-LAB1_DIR = os.path.join(_dir, "lab1_object_store")
-sys.path.insert(0, LAB1_DIR)
-from cloud import cloud_ls, cloud_upload  # noqa: E402
-
-sys.path.insert(0, os.path.join(_dir, "common"))
-from cloud_lowlevel import (  # noqa: E402
-    N_SERVERS,
-    delete,
-    leftvalue,
-    list_names,
-    rightvalue,
-    sha1string,
-)
-
-_SKIP_SUFFIXES = (".chunk0", ".chunk1", ".chunk2", ".chunk3", ".parity", ".meta", ".sha1")
-NEW_RING_SIZE = 4
 
 
 def ensure_test_file(path=DATA_FILE, size=DATA_SIZE):
@@ -74,7 +47,7 @@ def drop_cache(path):
         os.close(fd)
 
 
-def task_2_1_sequential_vs_random():
+def task_1_1_sequential_vs_random():
     block_seq = 1024 * 1024
     block_rand = 4096
     file_size = os.path.getsize(DATA_FILE)
@@ -107,7 +80,7 @@ def task_2_1_sequential_vs_random():
     print(f"random was {t_rand / t_seq:.1f}x slower for the same total bytes.")
 
 
-def task_2_2_flush():
+def task_1_2_flush():
     path = os.path.join(WORK_DIR, "bench_flush.bin")
     n_writes = 2000
     data = os.urandom(4096)
@@ -132,7 +105,7 @@ def task_2_2_flush():
     print(f"durability tax: {t_flush / t_no_flush:.1f}x slower")
 
 
-def task_2_3_queue_depth_sweep():
+def task_1_3_queue_depth_sweep():
     block_size = 4096
     ops_per_level = 500
     levels = (1, 4, 16, 64, 256)
@@ -170,7 +143,7 @@ def task_2_3_queue_depth_sweep():
         writer = csv.DictWriter(f, fieldnames=["queue_depth", "latency_s"])
         writer.writeheader()
         writer.writerows(rows)
-    print(f"\nRaw per-operation timings written to {csv_path}, keep this for Lab 3C.")
+    print(f"\nRaw per-operation timings written to {csv_path}, keep this for Lab 3 Part 4.")
 
 
 def _page_aligned_buffer(size, alignment=4096):
@@ -179,7 +152,7 @@ def _page_aligned_buffer(size, alignment=4096):
     return mmap.mmap(-1, size)
 
 
-def task_2_4_buffered_cached_direct():
+def task_1_4_buffered_cached_direct():
     block = 1024 * 1024
 
     t0 = time.perf_counter()
@@ -223,95 +196,7 @@ def task_2_4_buffered_cached_direct():
         os.close(fd)
 
 
-def h4d(hexchar):
-    return int(hexchar, 16) // 4 + 1
-
-
-def _current_replica_servers(cloud_name):
-    primary = h4d(sha1string(cloud_name)[0])
-    return [primary, leftvalue(primary, 1, NEW_RING_SIZE), rightvalue(primary, 1, NEW_RING_SIZE)]
-
-
-def _is_collectible(name):
-    return not name.endswith(_SKIP_SUFFIXES)
-
-
-def cloud_gc(dry_run=True):
-    report = []
-    per_server_counts = {}
-
-    for server in range(1, N_SERVERS + 1):
-        orphans_here = 0
-        for name in list_names(server):
-            if not _is_collectible(name):
-                continue
-            if server not in _current_replica_servers(name):
-                orphans_here += 1
-                report.append((server, name))
-                if not dry_run:
-                    delete(server, name)
-        per_server_counts[server] = orphans_here
-
-    mode = "would delete (dry run)" if dry_run else "deleted"
-    for server, count in per_server_counts.items():
-        print(f"server {server}: {count} orphan(s) {mode}")
-    print(f"\nTotal: {len(report)} orphan(s) {'found' if dry_run else 'removed'}.")
-    return report
-
-
-def _count_copies(names):
-    names = set(names)
-    return sum(
-        1
-        for server in range(1, N_SERVERS + 1)
-        for name in list_names(server)
-        if name in names
-    )
-
-
-def task_2_5_garbage_collection_after_resize():
-    pictures = sorted(glob.glob(os.path.join(LAB1_DIR, "pictures", "*")))[:30]
-    if len(pictures) < 30:
-        print("Not enough sample files, run make_sample_files.py in lab1_object_store/ first.")
-        return
-
-    names = [os.path.basename(p) for p in pictures]
-    for path, name in zip(pictures, names):
-        cloud_upload(path, name)
-
-    before = _count_copies(names)
-    print(f"Uploaded {len(names)} files under the OLD 8-server hash table.")
-    print(f"Physical copies of these files on disk: {before} (expected {len(names) * 3} = files x 3 replicas)\n")
-
-    print("cloud_ls() after the 'resize' to 4 servers:")
-    print(f"  {len(cloud_ls())} names still listed, the bucket index doesn't know")
-    print("  or care how many servers the hash table has.\n")
-
-    reachable = sum(1 for name in names if name in list_names(h4d(sha1string(name)[0])))
-    print(f"Reachable at their NEW-scheme (4-server) primary location: {reachable}/{len(names)}")
-    print(
-        "The rest still exist on disk, on whichever of the OLD 8 servers "
-        "they originally hashed to, but a lookup that trusts the new "
-        "4-server hash table will never look there.\n"
-    )
-
-    print("--- dry run ---")
-    cloud_gc(dry_run=True)
-    after_dry_run = _count_copies(names)
-    print(f"Copies of these files still on disk after dry run: {after_dry_run} (should be unchanged: {before})\n")
-
-    print("--- actual GC ---")
-    cloud_gc(dry_run=False)
-    after = _count_copies(names)
-    print(f"\nCopies of these files on disk after GC: {after} (removed {before - after} orphan(s))")
-    print(
-        "\nNote: GC only REMOVES misplaced copies, it doesn't create the "
-        "correct ones. Some files may now be under-replicated at their "
-        "new-scheme location. That's exactly what Lab 3B's cloud_heal is for."
-    )
-
-
-def task_2_6_small_file_tax():
+def task_1_5_small_file_tax():
     total_mb = 100
     counts = (1, 100, 10_000)
     base_dir = os.path.join(WORK_DIR, "small_file_tax")
@@ -347,7 +232,7 @@ def task_2_6_small_file_tax():
     shutil.rmtree(base_dir, ignore_errors=True)
 
 
-def task_2_7_mmap():
+def task_1_6_mmap():
     block_rand = 4096
     file_size = os.path.getsize(DATA_FILE)
     n_ops = COMPARE_BYTES // block_rand
@@ -367,10 +252,10 @@ def task_2_7_mmap():
 
     mib = COMPARE_BYTES / (1024 * 1024)
     print(f"mmap random access (4 KiB slices): {t_mmap:7.3f}s  ({mib / t_mmap:8.1f} MiB/s)")
-    print("Compare this to Task 2.1's random read()/seek() number: same total bytes, same pattern.")
+    print("Compare this to Task 1.1's random read()/seek() number: same total bytes, same pattern.")
 
 
-def task_2_8_cache_cliff():
+def task_1_7_cache_cliff():
     sizes = [
         ("16 MiB", 16 * 1024 * 1024),
         ("256 MiB", 256 * 1024 * 1024),
@@ -416,17 +301,16 @@ def task_2_8_cache_cliff():
 
 
 TASKS = {
-    "2.1": task_2_1_sequential_vs_random,
-    "2.2": task_2_2_flush,
-    "2.3": task_2_3_queue_depth_sweep,
-    "2.4": task_2_4_buffered_cached_direct,
-    "2.5": task_2_5_garbage_collection_after_resize,
-    "2.6": task_2_6_small_file_tax,
-    "2.7": task_2_7_mmap,
-    "2.8": task_2_8_cache_cliff,
+    "1.1": task_1_1_sequential_vs_random,
+    "1.2": task_1_2_flush,
+    "1.3": task_1_3_queue_depth_sweep,
+    "1.4": task_1_4_buffered_cached_direct,
+    "1.5": task_1_5_small_file_tax,
+    "1.6": task_1_6_mmap,
+    "1.7": task_1_7_cache_cliff,
 }
 
-NO_DATA_FILE_NEEDED = {"2.5", "2.6", "2.8"}
+NO_DATA_FILE_NEEDED = {"1.5", "1.7"}
 
 
 def main():

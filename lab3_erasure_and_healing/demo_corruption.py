@@ -1,5 +1,5 @@
 """
-3B demo (task 4): silent corruption. cloud_check only confirms a copy
+Part 3 demo (task 3.2.4): silent corruption. cloud_check only confirms a copy
 *exists*; it says nothing about whether its bytes are still correct. A
 checksum is the only thing that notices.
 
@@ -13,8 +13,8 @@ import tempfile
 
 from cloud_ec import _replica_servers, checksum_store, checksum_verify, cloud_check
 
-LAB1_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lab1_object_store")
-sys.path.insert(0, LAB1_DIR)
+OBJECT_STORE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lab2_object_store")
+sys.path.insert(0, OBJECT_STORE_DIR)
 from cloud import cloud_upload  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))

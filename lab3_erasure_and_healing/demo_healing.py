@@ -1,8 +1,8 @@
 """
-3B demo (tasks 1-3): upload files with Lab 1's replicated cloud_upload,
+Part 3 demo (tasks 3.2.1-3.2.3): upload files with Lab 2's replicated cloud_upload,
 fail one node, check what's DEGRADED/LOST, then heal and re-check.
 
-Run after implementing cloud_check/cloud_heal (and after Lab 1's
+Run after implementing cloud_check/cloud_heal (and after Lab 2's
 cloud_upload already replicates to 3 servers):
 
     python3 demo_healing.py
@@ -14,8 +14,8 @@ import tempfile
 
 from cloud_ec import cloud_check, cloud_heal
 
-LAB1_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lab1_object_store")
-sys.path.insert(0, LAB1_DIR)
+OBJECT_STORE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lab2_object_store")
+sys.path.insert(0, OBJECT_STORE_DIR)
 from cloud import cloud_upload  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
@@ -26,9 +26,9 @@ FAILED_SERVER = 3
 
 
 def main():
-    pictures = sorted(glob.glob(os.path.join(LAB1_DIR, "pictures", "*")))[:N_TEST_FILES]
+    pictures = sorted(glob.glob(os.path.join(OBJECT_STORE_DIR, "pictures", "*")))[:N_TEST_FILES]
     if len(pictures) < N_TEST_FILES:
-        print("Not enough sample files, run make_sample_files.py in lab1_object_store/ first.")
+        print("Not enough sample files, run make_sample_files.py in lab2_object_store/ first.")
         return
 
     names = [os.path.basename(p) for p in pictures]

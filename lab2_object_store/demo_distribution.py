@@ -1,5 +1,5 @@
 """
-Task 1.1 demo: upload every sample file and see how evenly the DHT spreads
+Task 2.1 demo: upload every sample file and see how evenly the DHT spreads
 them across the 8 servers.
 
 Run after implementing the primary-placement part of cloud_upload:
