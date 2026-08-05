@@ -197,6 +197,13 @@ page cache stops being big enough to hide the difference between them.
 Writing up to 16 GiB four times over adds up: measured ~2 minutes total
 on the course node, budget for that.
 
+**On the course node specifically**, each account is capped at 24 GiB of
+memory. By this point `DATA_FILE` (16 GiB, from earlier tasks) is
+usually still fully cached, so the 16 GiB step here needs another
+~16 GiB on top of that, more than the cap allows. That means you'll
+likely see a real cliff at the 16 GiB step even on your own, solo,
+rather than needing to rely on other students' concurrent load for it.
+
 Implement `task_1_7_cache_cliff`: for each size, write a fresh file (in
 `WORK_DIR`, one at a time, deleting each before moving to the next size),
 then measure sequential throughput and a random-access throughput over
