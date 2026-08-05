@@ -12,16 +12,17 @@ every one of those layers yourself, with no framework in the way.
 Lab 3 Part 4, on Day 2.
 
 **Timing note:** most tasks finish in well under a second. A few don't:
-**Task 1.1**'s random-read pass (256 MiB in 4 KiB chunks, forced cold)
+
+- **Task 1.1**'s random-read pass (256 MiB in 4 KiB chunks, forced cold)
 pays a real seek cost on all 65536 reads and is the longest task in this
 lab (measured ~6 minutes on the course node's disks; likely a few
-seconds on a laptop SSD),
-**Task 1.2** forces 2000 real disk syncs (measured ~90 seconds on the
-course node's spinning disks; likely a few seconds on a laptop SSD),
-**Task 1.4** reads the whole 16 GiB file up to 3 times over (cold pass
+seconds on a laptop SSD)
+- **Task 1.2** forces 2000 real disk syncs (measured ~90 seconds on the
+course node's spinning disks; likely a few seconds on a laptop SSD
+- **Task 1.4** reads the whole 16 GiB file up to 3 times over (cold pass
 and the `O_DIRECT` pass can each take over a minute on a spinning disk,
 up to several minutes if the operation is done by multiple processes),
-and **Task 1.7** writes up to 16 GiB four times over (measured ~2
+- **Task 1.7** writes up to 16 GiB four times over (measured ~2
 minutes solo on the course node, but this one varies a lot more than
 the others: if many students reach it around the same time, the last
 (16 GiB) step alone can take anywhere from a few seconds to several
