@@ -19,10 +19,16 @@ seconds on a laptop SSD),
 **Task 1.2** forces 2000 real disk syncs (measured ~90 seconds on the
 course node's spinning disks; likely a few seconds on a laptop SSD),
 **Task 1.4** reads the whole 16 GiB file up to 3 times over (cold pass
-and the `O_DIRECT` pass can each take over a minute on a spinning disk),
+and the `O_DIRECT` pass can each take over a minute on a spinning disk,
+up to several minutes if the operation is done by multiple processes),
 and **Task 1.7** writes up to 16 GiB four times over (measured ~2
-minutes on the course node). None of these are stuck if they take that
-long: that wait *is* the thing being measured.
+minutes solo on the course node, but this one varies a lot more than
+the others: if many students reach it around the same time, the last
+(16 GiB) step alone can take anywhere from a few seconds to several
+minutes, since it depends on how much of the *shared* page cache
+happens to be free right then, not just your own file size). None of
+these are stuck if they take that long: that wait *is* the thing being
+measured.
 
 ## Part 1: Setup
 

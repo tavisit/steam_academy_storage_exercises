@@ -60,7 +60,14 @@ def main():
         "4-server hash table will never look there.\n"
     )
 
-    print("--- dry run ---")
+    print(
+        "--- dry run ---\n"
+        "(cloud_gc scans all N_SERVERS servers, so its own totals below cover "
+        "EVERY object you've ever uploaded in this lab -- including from "
+        "demo_distribution.py/demo_redundancy.py if you ran those first -- not "
+        "just this demo's 30 files. The before/after counts above and below "
+        "stay scoped to just these 30.)"
+    )
     cloud_gc(dry_run=True)
     after_dry_run = _count_copies(names)
     print(f"Copies of these files still on disk after dry run: {after_dry_run} (should be unchanged: {before})\n")
