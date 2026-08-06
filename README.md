@@ -20,8 +20,7 @@ primitives.
 
 ## Getting started
 
-1. Get your account username and temporary password from the speakers
-   (also in `/root/steam/steam-handout.txt` on the node, for the speakers).
+1. Get your account username and temporary password from the speakers.
 2. SSH in and change your password when prompted (first login forces this):
    ```bash
    ssh <username>@steam-storage.cern.ch
